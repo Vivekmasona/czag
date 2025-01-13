@@ -1,27 +1,25 @@
 const express = require('express');
-const axios = require('axios');
-const { JSDOM } = require('jsdom');
-
+const ytdl = require('@distube/ytdl-core');
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = 3000;
 
-app.get('/extract', async (req, res) => {
-  const targetUrl = req.query.url;
-  if (!targetUrl) {
-    return res.status(400).json({ error: 'URL parameter is required' });
+app.get('/play', async (req, res) => {
+  const videoUrl = req.query.url;
+  if (!videoUrl) {
+    return res.status(400).send('कृपया YouTube वीडियो URL प्रदान करें: ?url=YOUR_YOUTUBE_URL');
   }
 
   try {
-    const response = await axios.get(targetUrl);
-    const dom = new JSDOM(response.data);
-    const document = dom.window.document;
-    const links = Array.from(document.querySelectorAll('a')).map(link => link.href);
-    res.json({ links });
+    res.setHeader('Content-Type', 'audio/mp3');
+    ytdl(videoUrl, {
+      filter: 'audioonly',
+      quality: 'highestaudio',
+    }).pipe(res);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).send('ऑडियो स्ट्रीमिंग में त्रुटि: ' + error.message);
   }
 });
 
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`ऑडियो स्ट्रीमिंग सर्वर चल रहा है: http://localhost:${PORT}/play?url=YOUR_YOUTUBE_URL`);
 });
